@@ -101,9 +101,7 @@ void loop() {
   digitalWrite(PIN_ERR,HIGH);
  }
 
- if(0){
-  //do nothing
- }
+
  
 
   //manipulate location from flags
