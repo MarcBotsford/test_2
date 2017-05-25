@@ -1,3 +1,6 @@
+#include <Event.h>
+#include <Timer.h>
+
  #define PIN_L0 3
 #define PIN_L1 4
 
@@ -6,7 +9,9 @@
 
   uint16_t l0_val;
   uint16_t l1_val;
-  
+
+  volatile uint64_t cnt_0;
+  volatile uint64_t cnt_1;
 
   uint8_t flg0;
   uint8_t flg1;
@@ -26,19 +31,11 @@ void setup() {
 }
 
 void loop() {
-  //read up
-// l0_val = analogRead(PIN_L0);
-// delay(5);
-// l0_val = analogRead(PIN_L0);
-//
-// 
-// l1_val = analogRead(PIN_L1);
-// delay(5);
-// l1_val = analogRead(PIN_L1);
 
+//read up
  l0_val = digitalRead(PIN_L0);
  l1_val = digitalRead(PIN_L1);
-
+//print state of each diode (for debugging)
  Serial.print(l0_val);
  Serial.print("   ");
  Serial.println(l1_val);
@@ -48,7 +45,7 @@ void loop() {
   //set flags
 
 
-
+    //figure out where the vole is
   
  if(!l0_val && !flg0 && !sfg){
   flg0 = 1;
@@ -91,6 +88,8 @@ void loop() {
   }
  }
 
+
+  //update ouputs based on location
  if(location == 1){
   digitalWrite(PIN_LZR, HIGH);
   digitalWrite(PIN_ERR,LOW);
@@ -102,9 +101,20 @@ void loop() {
  }
 
 
+
+ //track time
  
 
-  //manipulate location from flags
-  
-
 }
+
+
+void time_tracker_ISR(void){
+  
+  
+}
+
+
+
+
+
+
