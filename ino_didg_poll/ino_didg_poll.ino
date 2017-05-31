@@ -9,7 +9,7 @@
 //*********************************************************
 
 
-#include <Event.h>
+//#include <Event.h>
 #include <Timer.h>
 
 Timer t;
@@ -23,26 +23,27 @@ Timer t;
 
 #define PIN_ERR 9
 
+#define LAZE_0 11
+#define LAZE_1 12
 
   uint16_t l0_val;
   uint16_t l1_val;
 
+  void* x = NULL;
+  volatile uint8_t lazer_osc;
   volatile uint32_t cnt_0;
   volatile uint32_t cnt_1;
 
   uint8_t flg0;
   uint8_t flg1;
-  uint8_t sfg;
+  uint8_t sfg;            //sameflag, high iff both doides are blocked
   uint8_t butflg;
 
   uint8_t location = 0;     //initialize location to chamber zero
   uint64_t err_cnt = 0;
 
 
-void setup() {
-  
-  t.every(250, time_tracker_ISR,0xffffffff);
-  
+void setup() {  
   pinMode(PIN_G, OUTPUT);
   pinMode(PIN_Y, OUTPUT);
   pinMode(PIN_L0, INPUT);
@@ -51,6 +52,8 @@ void setup() {
   pinMode(PIN_ERR, OUTPUT);
   
   attachInterrupt(digitalPinToInterrupt(PIN_BUT),button_ISR,FALLING);
+
+
 
   
   Serial.begin(9600);
@@ -72,9 +75,28 @@ if(!l0_val || !l1_val){
     digitalWrite(PIN_ERR,HIGH);
   }
 }
+else{
+  err_cnt = 0;
+}
+
 
 
     //figure out if the vole is on the move and update location
+
+ if(sfg){
+      if(l1_val){
+        location = 0;
+        sfg =0;
+      }
+      if(l0_val){
+        location = 1;
+        sfg = 0;
+      }
+}
+
+
+
+    
   
  if(!l0_val && !flg0 && !sfg){
   flg0 = 1;
@@ -83,16 +105,8 @@ if(!l0_val || !l1_val){
     flg1 = 0;
     flg0 = 0;
     if(!l0_val && ! l1_val){
-      while(!l0_val && !l1_val){
-        l1_val = digitalRead(PIN_L1);
-        l0_val = digitalRead(PIN_L0);
-      }
-      if(!l1_val){
-        location = 1;
-      }
-      if(!l0_val){
-        location = 0;
-      }
+      sfg = 1;
+
     }
   }
  }
@@ -102,20 +116,13 @@ if(!l0_val || !l1_val){
     location = 1;
     flg1=0;
     flg0=0;
-        if(!l0_val && ! l1_val){
-      while(!l0_val && !l1_val){
-        l1_val = digitalRead(PIN_L1);
-        l0_val = digitalRead(PIN_L0);
-      }
-      if(!l1_val){
-        location = 1;
-      }
-      if(!l0_val){
-        location = 0;
-      }
+    if(!l0_val && ! l1_val){
+       sfg = 1;
     }
   }
  }
+
+
 
 
   //update ouputs based on location
@@ -156,8 +163,20 @@ void time_tracker_ISR(){
       //will soon be obsolete after SSD integration
 void button_ISR(){
   butflg = 1;
+  delay(5000);
+  Serial.println("WHY");
 }
 
+void posedge_step(){
+  lazer_osc = 1;
+  t.after(25,negedge_step,x);
+}
+void negedge_step(){
+  lazer_osc = 0;
+}
+void laze_init(){
+  t.every(100,posedge_step,0xffffffff,x);
+}
 
 
 
